@@ -2,55 +2,69 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Kellner-Seite</title>
-  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+  <title>Warenkorb</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <style>
     body { font-family: sans-serif; padding: 20px; }
-    video { width: 100%; max-width: 400px; border: 2px solid #333; }
-    canvas { display: none; }
+    button { margin: 5px; padding: 5px 10px; }
+    .eintrag { margin: 5px 0; }
   </style>
 </head>
 <body>
-  <h1>QR-Code scannen</h1>
-  <video id="video" autoplay></video>
-  <p id="ergebnis">Noch kein QR-Code erkannt.</p>
+  <h1>Warenkorb</h1>
+  <div id="warenkorb"></div>
+  <p><strong>Gesamt:</strong> <span id="summe">0.00</span> €</p>
+  <button onclick="warenkorbLeeren()">🗑️ Warenkorb leeren</button>
+  <h2>QR-Code der Bestellung:</h2>
+  <canvas id="qrcode"></canvas>
+  <br>
+  <a href="produktseite.html">⬅️ Zurück zu den Produkten</a>
 
   <script>
-    const video = document.getElementById("video");
-    const ergebnis = document.getElementById("ergebnis");
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
+    let warenkorb = JSON.parse(localStorage.getItem("warenkorb") || "[]");
+    const container = document.getElementById("warenkorb");
+    const summeEl = document.getElementById("summe");
 
-    navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { exact: "environment" } }
-    })
-    .then(stream => {
-      video.srcObject = stream;
-      video.setAttribute("playsinline", true);
-      requestAnimationFrame(tick);
-    })
-    .catch(() => {
-      navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => {
-        video.srcObject = stream;
-        video.setAttribute("playsinline", true);
-        requestAnimationFrame(tick);
+    function renderWarenkorb() {
+      container.innerHTML = "";
+      let gesamt = 0;
+      warenkorb.forEach((item, index) => {
+        gesamt += item.preis;
+        const div = document.createElement("div");
+        div.className = "eintrag";
+        div.innerHTML = `
+          ${item.name} – ${item.preis.toFixed(2)} €
+          <button onclick="entfernen(${index})">❌</button>
+        `;
+        container.appendChild(div);
       });
-    });
+      summeEl.innerText = gesamt.toFixed(2);
 
-    function tick() {
-      if (video.readyState === video.HAVE_ENOUGH_DATA) {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        const code = jsQR(imageData.data, canvas.width, canvas.height);
-        if (code) {
-          ergebnis.innerText = "Bestellung: " + code.data;
-        }
+      if (warenkorb.length > 0) {
+        const bestellung = warenkorb.map(i => i.name).join(", ");
+        QRCode.toCanvas(document.getElementById("qrcode"), bestellung);
+      } else {
+        const canvas = document.getElementById("qrcode");
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
-      requestAnimationFrame(tick);
     }
+
+    function entfernen(index) {
+      warenkorb.splice(index, 1);
+      localStorage.setItem("warenkorb", JSON.stringify(warenkorb));
+      renderWarenkorb();
+    }
+
+    function warenkorbLeeren() {
+      if (confirm("Wirklich den Warenkorb leeren?")) {
+        warenkorb = [];
+        localStorage.setItem("warenkorb", "[]");
+        renderWarenkorb();
+      }
+    }
+
+    renderWarenkorb();
   </script>
 </body>
 </html>
