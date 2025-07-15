@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Produktseite</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    button { margin: 5px; padding: 5px 10px; }
+    .produkt { margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Produkte</h1>
+  <div id="produkte"></div>
+  <a href="warenkorb.html">➡️ Zum Warenkorb</a>
+
+  <script>
+    const produkte = [
+      { name: "Pizza Margherita", preis: 8 },
+      { name: "Pizza Salami", preis: 9 },
+      { name: "Pizza Hawaii", preis: 9 },
+      { name: "Pasta Carbonara", preis: 11 },
+      { name: "Cola 0,5l", preis: 3 },
+      { name: "Fanta 0,5l", preis: 3 },
+      { name: "Wasser 0,5l", preis: 2 },
+      { name: "Eiskaffee", preis: 4 },
+      { name: "Panna Cotta", preis: 4 },
+      { name: "Tiramisu", preis: 5 },
+      { name: "Kaffee", preis: 2.5 },
+      { name: "Espresso", preis: 2 }
+    ];
+
+    const container = document.getElementById("produkte");
+
+    produkte.forEach((produkt, index) => {
+      const div = document.createElement("div");
+      div.className = "produkt";
+      div.innerHTML = `
+        <strong>${produkt.name}</strong> – ${produkt.preis.toFixed(2)} €
+        <button onclick="inWarenkorb(${index})">🛒</button>
+      `;
+      container.appendChild(div);
+    });
+
+    function inWarenkorb(index) {
+      const warenkorb = JSON.parse(localStorage.getItem("warenkorb") || "[]");
+      warenkorb.push(produkte[index]);
+      localStorage.setItem("warenkorb", JSON.stringify(warenkorb));
+      alert(`${produkte[index].name} wurde in den Warenkorb gelegt.`);
+    }
+  </script>
+</body>
+</html>
